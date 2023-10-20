@@ -1,9 +1,7 @@
 #!/usr/python3
 """ this module we will be dealing with intro to Flask """
+from flask import render_template, request, Flask
 
-
-from flask import render_template, request
-from flask import Flask
 
 app = Flask(__name__)
 
