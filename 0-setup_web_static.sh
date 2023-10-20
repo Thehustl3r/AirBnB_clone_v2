@@ -1,29 +1,47 @@
 #!/usr/bin/env bash
-# updating the system and installing Nginx
+# the script that will configure the web server
 
-sudo apt-get update
-sudo apt-get -y install nginx
+# install nginx if doesn't exit
+if ! command -v nginx &> /dev/null; then
+	sudo apt-get update && sudo apt-get install nginx -y
+fi
 
-# creating the forders mentioned
-sudo mkdir -p /data/web_static/releases/test/
-sudo mkdir -p /data/web_static/shared/
+# create necessary directory if they don't exist
+sudo mkdir -p /data/web_static/{releases/test,shared}
 
-# creating the fake Html file
-echo '<html>
-  <head>
-  </head>
-  <body>
-    Holberton School
-  </body>
-</html>' >> /data/web_static/releases/test/index.html
+# create a fake HTML file for testing
+echo "
+<html>
+	<head>
+	</head>
+	<body>
+		Holberton School
+	</body>
+</html>" | sudo tee /data/web_static/releases/test/index.html
 
-# creating the symbolic link
+# create or recreate a symblolic link
 sudo ln -sf /data/web_static/releases/test/ /data/web_static/current
 
-# Changing the ownership of the data forder
-sudo chown -R ubuntu:ubuntu /data/
+# give ownership of /data folder to the ubuntu user
+sudo chown -R ubuntu:ubuntu /data
 
-# updating Nginx configuration file
-sudo sed -i "26i \\\tlocation /hbnb_static/ {\n\t\talias /data/web_static/current/;\n\t}\n" /etc/nginx/sites-available/default
-#restarting the Nginx
-sudo service nginx start
+# Update Nginx configuration to serve rhe content
+echo "
+server {
+	listen 80;
+	server_name _;
+
+	location /hbnb_static {
+		alias /data/web_static/current;
+	}
+
+	location / {
+		index index.html
+	}
+}" | sudo tee /etc/nginx/sites-available/default
+
+# test configuration
+nginx -t > /dev/null
+
+# Restart Nginx to apply the changes
+sudo service nginx restart
